@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Messaging Application</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  </head>
+  <body>
+  	<div class="container">
+    	<h1>Messaging Application</h1>
+      <br>
+      <div class="row">
+	<div>
+	        <button type="button" class="btn btn-default" id="btn-reply">Reply</button>
+		<button type="button" class="btn btn-default" id="btn-delete">Delete</button>
+	</div>
+      </div>
+      <br>
+      <div class="row">
+          <div class="form-group">
+            <input type="input" class="form-control" id="input-msg-box" placeholder="Enter Message" value='{"title": "Example Title", "message": "Example Message", "creator": "krishna", "parent": null}'>
+          </div>
+      </div>
+      <div class="row">
+        <div id="treeview1" class=""></div>
+      </div>
+      <br/>
+      <br/>
+      <br/>
+      <br/>
+    </div>
+  	<script src="./js/bootstrap-treeview.js"></script>
+  	<script type="text/javascript">
+
+	var getJSON = function(url, callback) {
+    		var xhr = new XMLHttpRequest();
+    		xhr.open('GET', url, true);
+    		xhr.responseType = 'json';
+    		xhr.onload = function() {
+      			var status = xhr.status;
+      			if (status === 200) {
+        			callback(null, xhr.response);
+      			} else {
+        			callback(status, xhr.response);
+      			}
+    		};
+    		xhr.send();
+	};
+
+	function list_to_tree(list) {
+    		var map = {}, node, roots = [], i;
+    		for (i = 0; i < list.length; i += 1) {
+			list[i].text = list[i].title +':'+ list[i].message;
+			list[i].href = '#node'+ list[i].id;
+        		map[list[i].id] = i; // initialize the map
+        		list[i].nodes = null; // initialize the children
+    		}
+    		for (i = 0; i < list.length; i += 1) {
+        		node = list[i];
+        		if (node.parent !== null) {
+			    if(list[map[node.parent]].nodes == null) list[map[node.parent]].nodes = [];
+            			list[map[node.parent]].nodes.push(node);
+			} else {
+            			roots.push(node);
+        		}
+    		}
+    		return roots;
+	}
+
+	var $treeview1;
+
+	$(function() {
+
+		getJSON('https://staging.smardtportal.com/exam/krishna',
+			function(err, data) {
+  				if (err !== null) {
+    					alert('Something went wrong: ' + err);
+  				} else {
+				    	var x= list_to_tree(data.results);
+				    	$treeview1 = $('#treeview1').treeview({
+          					data: x ,
+					        onNodeSelected: function(event, node) {
+              						$('#selectable-output').prepend('<p>' + node.text + ' was selected</p>');
+							$('#input-msg-box').val('{"title": "Example Title", "message": "Example Message", "creator": "krishna", "parent":'+ node.id+'}');
+            					},
+        				});   
+					
+
+				 }
+			});
+	  });
+
+          $('#btn-reply').on('click', function (e) {
+		var msg = $('#input-msg-box').val();
+		var xhr = new XMLHttpRequest();
+		xhr.open("POST", 'https://staging.smardtportal.com/exam/krishna', true);
+		xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+		//var json = JSON.stringify(msg);
+		//xhr.send(JSON.stringify(msg));
+	        xhr.send(msg);
+    	  });
+
+    </script>
+  </body>
+</html>
