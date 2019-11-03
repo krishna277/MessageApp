@@ -7,24 +7,25 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
   </head>
   <body>
-  	<div class="container">
+     <div class="container">
     	<h1>Messaging Application</h1>
-      <br>
-      <div class="row">
-	<div>
+        <br>
+        <div class="row">
+	   <div>
 	        <button type="button" class="btn btn-default" id="btn-reply">Reply</button>
 		<button type="button" class="btn btn-default" id="btn-delete">Delete</button>
-	</div>
-      </div>
-      <br>
-      <div class="row">
+	  </div>
+        </div>
+        <br>
+        <div class="row">
           <div class="form-group">
-            <input type="input" class="form-control" id="input-msg-box" placeholder="Enter Message" value='{"title": "Example Title", "message": "Example Message", "creator": "krishna", "parent": null}'>
+            <input type="input" class="form-control" id="input-msg-title-box" placeholder="Enter Message Title" value='Example Title'>
+            <input type="input" class="form-control" id="input-msg-box" placeholder="Enter Message" value='Example Message'>
           </div>
-      </div>
-      <div class="row">
-        <div id="treeview1" class=""></div>
-      </div>
+        </div>
+        <div class="row">
+          <div id="treeview1" class=""></div>
+        </div>
       <br/>
       <br/>
       <br/>
@@ -81,8 +82,8 @@
 				    	$treeview1 = $('#treeview1').treeview({
           					data: x ,
 					        onNodeSelected: function(event, node) {
-              						$('#selectable-output').prepend('<p>' + node.text + ' was selected</p>');
-							$('#input-msg-box').val('{"title": "Example Title", "message": "Example Message", "creator": "krishna", "parent":'+ node.id+'}');
+              						//$('#selectable-output').prepend('<p>' + node.text + ' was selected</p>');
+							//$('#input-msg-box').val('{"title": "Example Title", "message": "Example Message", "creator": "krishna", "parent":'+ node.id+'}');
             					},
         				});   
 					
@@ -92,14 +93,74 @@
 	  });
 
           $('#btn-reply').on('click', function (e) {
-		var msg = $('#input-msg-box').val();
+		var msgb = $('#input-msg-box').val();
+		var ttl = $('#input-msg-title-box').val();
+		var par = null;
+		var selec = $treeview1.treeview('getSelected',Node);
+		if (selec.length == 1 ) par = selec[0].id;
 		var xhr = new XMLHttpRequest();
-		xhr.open("POST", 'https://staging.smardtportal.com/exam/krishna', true);
+		xhr.open("POST", 'https://staging.smardtportal.com/exam/krishna/', true);
 		xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
-		//var json = JSON.stringify(msg);
-		//xhr.send(JSON.stringify(msg));
-	        xhr.send(msg);
+		xhr.onreadystatechange = function () { 
+    			if (xhr.readyState == 2 && xhr.status == 201) {
+				getJSON('https://staging.smardtportal.com/exam/krishna',
+				function(err, data) {
+  					if (err !== null) {
+    						alert('Something went wrong: ' + err);
+  					} else {
+				    		var x= list_to_tree(data.results);
+				    		$treeview1 = $('#treeview1').treeview({
+          					       data: x ,
+					 	       onNodeSelected: function(event, node) {
+              							//$('#selectable-output').prepend('<p>' + node.text + ' was selected</p>');
+								//$('#input-msg-box').val('{"title": "Example Title", "message": "Example Message", "creator": "krishna", "parent":'+ node.id+'}');
+            						},
+        					});   
+					
+
+					 }
+				});
+
+    			}
+		}
+		var msg ={};
+		msg.title = ttl;
+		msg.message = msgb;
+		msg.creator = "krishna";
+		msg.parent = par;
+		var json = JSON.stringify(msg);
+		xhr.send(json);
+	        //xhr.send(msg);
     	  });
+
+          $('#btn-delete').on('click', function (e) {
+		var selec = $treeview1.treeview('getSelected',Node);
+		if (selec.length == 1 ) {
+			var xhr = new XMLHttpRequest();
+			xhr.open("DELETE", 'https://staging.smardtportal.com/exam/krishna/'+selec[0].id+'/', true);
+			xhr.onload = function () { 
+    				if (xhr.readyState == 4 && xhr.status == 204) {
+					getJSON('https://staging.smardtportal.com/exam/krishna',
+					function(err, data) {
+  						if (err !== null) {
+    							alert('Something went wrong: ' + err);
+  						} else {
+				    			var x= list_to_tree(data.results);
+				    			$treeview1 = $('#treeview1').treeview({
+          							data: x ,
+					 	       		onNodeSelected: function(event, node) {
+              								//$('#selectable-output').prepend('<p>' + node.text + ' was selected</p>');
+									//$('#input-msg-box').val('{"title": "Example Title", "message": "Example Message", "creator": "krishna", "parent":'+ node.id+'}');
+            							},
+        						});   
+			
+					 	}
+					});
+	    			}
+			}
+			xhr.send();
+		}
+	  });
 
     </script>
   </body>
